@@ -11,6 +11,6 @@ public:
 	MotionDetector(){};
 	~MotionDetector(){};
 	
-	void start(void(*motionCallback)(cv::Mat));	
+	void start(void(*motionCallback)(cv::Mat,std::string));	
 
 };

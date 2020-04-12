@@ -1,9 +1,10 @@
 #include "motiondetector.h"
+#include <string>
 
 using namespace cv;
 using namespace std;
 
-void MotionDetector::start(void(*motionCallback)(cv::Mat)) {
+void MotionDetector::start(void(*motionCallback)(cv::Mat, std::string)) {
 	
 	Mat frame, gray, frameDelta, thresh, firstFrame;
     vector<vector<Point> > cnts;
@@ -20,8 +21,9 @@ void MotionDetector::start(void(*motionCallback)(cv::Mat)) {
     cvtColor(frame, firstFrame, COLOR_BGR2GRAY);
     GaussianBlur(firstFrame, firstFrame, Size(21, 21), 0);
 
+	int j(0);
     while(camera.read(frame)) {
-
+	
         //convert to grayscale
         cvtColor(frame, gray, COLOR_BGR2GRAY);
         GaussianBlur(gray, gray, Size(21, 21), 0);
@@ -37,13 +39,13 @@ void MotionDetector::start(void(*motionCallback)(cv::Mat)) {
             if(contourArea(cnts[i]) < 500) {
                 continue;
             }
+			std::string title = std::to_string(j++);
+			motionCallback(frame, title);
 
-			motionCallback(frame);
-
-            
+			//convert to grayscale and set the first frame
+			cvtColor(frame, firstFrame, COLOR_BGR2GRAY);
+			GaussianBlur(firstFrame, firstFrame, Size(21, 21), 0);
         }
-    
-        imshow("Camera", frame);
         
         if(waitKey(1) == 27){
             //exit if ESC is pressed
