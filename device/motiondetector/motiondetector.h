@@ -11,6 +11,14 @@ public:
 	MotionDetector(){};
 	~MotionDetector(){};
 	
-	void start(void(*motionCallback)(cv::Mat,std::string));	
-
+	void operator()(void(*motionCallback)(const cv::Mat&));
+	
+private:
+	/**
+	 * This function will pre-process the frame before running
+	 * computations on the frames. This should reduce the noise and very
+	 * slight differences between images that should not be captured by
+	 * the motion detector
+	 */
+	void preprocess(cv::Mat &);
 };

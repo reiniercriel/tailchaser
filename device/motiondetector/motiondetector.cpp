@@ -1,57 +1,79 @@
 #include "motiondetector.h"
 #include <string>
+#include <stdio.h>
+#include <chrono>
+#include <ctime>
 
 using namespace cv;
 using namespace std;
 
-void MotionDetector::start(void(*motionCallback)(cv::Mat, std::string)) {
-	
-	Mat frame, gray, frameDelta, thresh, firstFrame;
+void MotionDetector::operator()(void(*motionCallback)(const cv::Mat&)) {
+    Mat frame, gray, frameDelta, thresh, firstFrame;
     vector<vector<Point> > cnts;
-    VideoCapture camera(0); //open camera
     
-    //set the video size to 512x288 to process faster
-    camera.set(3, 512);
-    camera.set(4, 288);
+    VideoCapture camera;
 
-    sleep(3);
+    // We should only have one camera connected
+    int deviceId = 0;
+    // Any API
+    int apiId = cv::CAP_ANY;
+    
+    camera.open(deviceId + apiId);
+    
+    if (!camera.isOpened()) {
+	printf("Error: Unable to open camera!");
+	return;
+    }
+
     camera.read(frame);
+    
+    // At startup, the first frame is the ground truth
+    // We will want this to change, in case something moves into the
+    // frame and stays there.
+    cv::Mat groundTruth = frame;    
+    preprocess(groundTruth);
 
-    //convert to grayscale and set the first frame
-    cvtColor(frame, firstFrame, COLOR_BGR2GRAY);
-    GaussianBlur(firstFrame, firstFrame, Size(21, 21), 0);
-
-	int j(0);
     while(camera.read(frame)) {
-	
-        //convert to grayscale
-        cvtColor(frame, gray, COLOR_BGR2GRAY);
-        GaussianBlur(gray, gray, Size(21, 21), 0);
+	cv::Mat candidate = frame;
 
-        //compute difference between first frame and current frame
-        absdiff(firstFrame, gray, frameDelta);
+	preprocess(frame);
+
+        //Now, let's subtract the background
+        absdiff(groundTruth, frame, frameDelta);
+
+	// Make all moving pixels white
         threshold(frameDelta, thresh, 25, 255, THRESH_BINARY);
-        
+	
+	// Dilation for 2 iterations (Add border to objects in image)
+	// 3x3 default kernel
         dilate(thresh, thresh, Mat(), Point(-1,-1), 2);
+	
+	// Find the contours of different objects, returns 2D points
         findContours(thresh, cnts, RETR_EXTERNAL, CHAIN_APPROX_SIMPLE);
 
         for(int i = 0; i< cnts.size(); i++) {
-            if(contourArea(cnts[i]) < 500) {
-                continue;
-            }
-			std::string title = std::to_string(j++);
-			motionCallback(frame, title);
-
-			//convert to grayscale and set the first frame
-			cvtColor(frame, firstFrame, COLOR_BGR2GRAY);
-			GaussianBlur(firstFrame, firstFrame, Size(21, 21), 0);
+	    // If we discover a big area, callback and return to capture
+            if(contourArea(cnts[i]) >= 500) {
+		groundTruth = candidate;
+		preprocess(groundTruth);
+		motionCallback(candidate);
+		break;
+	    }
         }
         
         if(waitKey(1) == 27){
             //exit if ESC is pressed
             break;
-        }
-    
+        }    
     }
-	
 }
+
+void MotionDetector::preprocess(cv::Mat &frame) {
+    // Make into a grayscale image
+    cvtColor(frame, frame, COLOR_BGR2GRAY);
+    
+    // Blur to reduce fine details
+    // Use a fairly large kernel
+    GaussianBlur(frame, frame, Size(21, 21), 0);
+}
+
