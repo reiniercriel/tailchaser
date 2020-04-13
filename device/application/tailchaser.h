@@ -2,18 +2,18 @@
 
 class TailChaser {
 public:
-	TailChaser();
-	~TailChaser();
-	
-	int start();
-	void stop();
-	
+    TailChaser();
+    ~TailChaser();
+
+    int start();
+    void stop();
+
 public:
-	static void on_motionDetected(const Mat &frame);
+    static void on_motionDetected(const Mat &frame);
 
 private:
-	void motionDetected(const Mat &frame);
+    void motionDetected(const Mat &frame);
 
 private:
-	bool m_isRunning;
+    bool m_isRunning;
 };
