@@ -1,4 +1,5 @@
 #include "../motiondetector/motiondetector.h"
+#include "../storagemanager/storagemanager.h"
 
 class TailChaser {
 public:
