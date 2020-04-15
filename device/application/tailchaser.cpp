@@ -23,9 +23,9 @@ TailChaser::~TailChaser() {
 }
 
 int TailChaser::start() {
-    //caller = this;
-    //std::thread mainThread(MotionDetector(),TailChaser::on_motionDetected);
-    //mainThread.join();
+//    caller = this;
+//    std::thread mainThread(MotionDetector(),TailChaser::on_motionDetected);
+//    mainThread.join();
     std::cout << "START" << std::endl;
     StorageManager storage;
     storage.start();

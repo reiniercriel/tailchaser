@@ -9,7 +9,8 @@ add_executable( TailChaser
                     main.cpp
                     motiondetector/motiondetector.cpp
                     application/tailchaser.cpp
-                    storagemanager/storagemanager.cpp)
+                    storagemanager/storagemanager.cpp
+                    storagemanager/bucket.cpp)
 
 add_definitions(-std=c++0x)# -m64)
 
