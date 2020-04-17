@@ -1,11 +1,11 @@
 # TailChaser
 A complete project for tracking your pet's movements during the day and uploading, analyzing and showing these movements on the AWS cloud. Please find in this repository the following layers:
-* Device layer
-* Simple WebbApp (TODO)
-* WebApp (TODO)
+* device
+* test_staticwebapp
+* webapp (TODO)
 You will find more detailed explanations about every layer below.
 
-## Component: Device
+## Component: device
 
 ### Description
 The device layer of this project is responsible for interacting with the machine on which the application is installed. The code was made for and tested on Rasberry Pi 4 but can also run on similar devices. As long as it is a Unix machine with a camera connected, chances are you can get it working fairly easily.
@@ -29,11 +29,11 @@ Small note about building the SDK. When building the module "aws-c-event-stream"
 This code requires an S3 instance to be up and running. Make sure to set your credentials a profile file, as
 explained in https://docs.aws.amazon.com/sdk-for-cpp/v1/developer-guide/credentials.html
 
-## test_staticwebapp
+## Component: test_staticwebapp
 The simple webapp is meant for testing purposes mainly. The idea is that this static web page can
 show the images which have been uploaded to the AWS S3 service by the device. It does no analysis
 or even ordering, but it allows you to double check the data. Please follow a few simple steps as
 listed here: https://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/s3-example-photos-view.html
 
-## WebApp
+## Component: webapp
 Ongoing
