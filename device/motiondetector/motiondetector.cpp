@@ -1,19 +1,29 @@
 #include "motiondetector.h"
 #include <string>
 #include <stdio.h>
-#include <chrono>
 #include <ctime>
+#include <time.h>
+#include <chrono>
+#include <sys/time.h>
+#include <unistd.h>
 
 using namespace cv;
 using namespace std;
+using namespace std::chrono;
 
-void MotionDetector::operator()(void(*motionCallback)(const cv::Mat&)) {
+const static unsigned long long offset = 60 * 1000; // 60 seconds
+const static int contourThresholds = 400;
+
+MotionDetector::MotionDetector()
+{}
+
+void MotionDetector::operator()(void(*motionCallback)(const cv::Mat&, const std::string&)) {
     Mat frame, gray, frameDelta, thresh, firstFrame;
     vector<vector<Point> > cnts;
 
     VideoCapture camera;
 
-    // We should only have one camera connected
+    // We should only have (at least) one camera connected
     int deviceId = 0;
     // Any API
     int apiId = cv::CAP_ANY;
@@ -27,11 +37,19 @@ void MotionDetector::operator()(void(*motionCallback)(const cv::Mat&)) {
 
     camera.read(frame);
 
+    // Start time of a 'movement'
+    unsigned long long currentMovementTimeStamp = generateCurrentTimeStamp();
+    unsigned long long timeStampCurrent = currentMovementTimeStamp;
+
     // At startup, the first frame is the ground truth
     // We will want this to change, in case something moves into the
     // frame and stays there.
     cv::Mat groundTruth = frame;
     preprocess(groundTruth);
+
+    // This index will keep track of the number of images we send down one bucket, it will be used
+    // as a name for the image, so it is easy to veiw them
+    int frameIndexForMovement = 0;
 
     while(camera.read(frame)) {
         cv::Mat candidate = frame;
@@ -52,19 +70,44 @@ void MotionDetector::operator()(void(*motionCallback)(const cv::Mat&)) {
 
         for(int i = 0; i< cnts.size(); i++) {
             // If we discover a big area, callback and return to capture
-            if(contourArea(cnts[i]) >= 500) {
+            if(contourArea(cnts[i]) >= contourThresholds) {
+                timeStampCurrent = generateCurrentTimeStamp();
+
+                // If a motion happens within 60 seconds of another motion we consider it part of
+                // the same 'movement' and will put the images in the same bucket
+                // If it's a new movement, change the bucket name
+                if (!isPartOfPreviousMotion(timeStampCurrent, currentMovementTimeStamp, offset)) {
+                    currentMovementTimeStamp = timeStampCurrent;
+                    frameIndexForMovement = 0;
+                }
+
                 groundTruth = candidate;
                 preprocess(groundTruth);
-                motionCallback(candidate);
+                std::string frameName = std::to_string(currentMovementTimeStamp)
+                                + "/" + std::to_string(++frameIndexForMovement) + ".jpg";
+                motionCallback(candidate, frameName);
                 break;
             }
         }
 
-        if(waitKey(1) == 27){
-            //exit if ESC is pressed
-            break;
-        }
+        // Give the device a breather
+        usleep(200);
     }
+}
+
+unsigned long long MotionDetector::generateCurrentTimeStamp(){
+    struct timeval time;
+
+    gettimeofday(&time, NULL);
+    unsigned long long millisecondsSinceEpoch = (unsigned long long)(time.tv_sec) * 1000 +
+                                                (unsigned long long)(time.tv_usec) / 1000;
+    return millisecondsSinceEpoch;
+}
+
+bool MotionDetector::isPartOfPreviousMotion(const unsigned long long &currentTimeStamp,
+                                            const unsigned long long &startTimeStamp,
+                                            const unsigned long long &offset){
+    return ((currentTimeStamp-startTimeStamp) < offset);
 }
 
 void MotionDetector::preprocess(cv::Mat &frame) {

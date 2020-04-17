@@ -9,10 +9,9 @@ add_executable( TailChaser
                     main.cpp
                     motiondetector/motiondetector.cpp
                     application/tailchaser.cpp
-                    storagemanager/storagemanager.cpp
                     storagemanager/bucket.cpp)
 
-add_definitions(-std=c++0x)# -m64)
+add_definitions(-std=c++0x)
 
 target_link_libraries( TailChaser   ${OpenCV_LIBS}
                                     ${CMAKE_THREAD_LIBS_INIT}

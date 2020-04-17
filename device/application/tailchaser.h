@@ -1,5 +1,9 @@
 #include "../motiondetector/motiondetector.h"
-#include "../storagemanager/storagemanager.h"
+#include "../storagemanager/bucket.h"
+
+#include <opencv2/opencv.hpp>
+using namespace cv;
+using namespace std;
 
 class TailChaser {
 public:
@@ -10,11 +14,12 @@ public:
     void stop();
 
 public:
-    static void on_motionDetected(const Mat &frame);
+    static void on_motionDetected(const cv::Mat&, const std::string&);
 
 private:
-    void motionDetected(const Mat &frame);
+    void motionDetected(const cv::Mat& frame, const std::string& frameName);
 
 private:
-    bool m_isRunning;
+    MotionDetector *m_motionDetector;
+    FrameBucket *m_frameBucket;
 };
