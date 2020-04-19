@@ -36,4 +36,9 @@ or even ordering, but it allows you to double check the data. Please follow a fe
 listed here: https://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/s3-example-photos-view.html
 
 ## Component: webapp
-Ongoing
+
+### Components used in this application
+1. NodeJs
+2. Angular
+3. MongoDB
+4. Elastic Beanstalk
